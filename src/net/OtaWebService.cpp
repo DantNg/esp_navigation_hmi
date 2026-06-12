@@ -45,6 +45,10 @@ static const char kIndexHtml[] PROGMEM = R"HTML(<!DOCTYPE html>
   <input type="file" name="file" required>
   <input type="submit" value="Upload to dir">
 </form>
+<form id="dirform" style="margin-top:8px">
+  <input type="file" id="dirpick" webkitdirectory multiple required>
+  <input type="submit" value="Upload folder to dir">
+</form>
 <progress id="upprog" max="100" value="0" style="width:100%;display:none"></progress>
 <p id="sdmsg"></p>
 <table id="files"><tr><th>Name</th><th>Size</th><th></th></tr></table>
@@ -89,6 +93,25 @@ $('fwform').onsubmit=e=>{e.preventDefault();
 };
 $('upform').onsubmit=e=>{e.preventDefault();
  xhrUpload('/sd/upload?dir='+encodeURIComponent($('dir').value),e.target,$('upprog'),$('sdmsg'),()=>list());
+};
+$('dirform').onsubmit=async e=>{e.preventDefault();
+ const fs=$('dirpick').files; if(!fs.length)return;
+ const d=$('dir').value, prog=$('upprog');
+ prog.style.display='block'; prog.value=0;
+ for(let i=0;i<fs.length;i++){
+  const f=fs[i], rel=f.webkitRelativePath||f.name;
+  $('sdmsg').textContent='Uploading '+(i+1)+'/'+fs.length+': '+rel;
+  const fd=new FormData(); fd.append('file',f);
+  let ok=false;
+  for(let retry=0;retry<3&&!ok;retry++){
+   try{const r=await fetch('/sd/upload?dir='+encodeURIComponent(d)+'&path='+encodeURIComponent(rel),{method:'POST',body:fd});ok=r.ok}
+   catch(_){}
+  }
+  if(!ok){$('sdmsg').textContent='Failed at '+rel+' ('+i+'/'+fs.length+' uploaded)';list();return}
+  prog.value=(i+1)/fs.length*100;
+ }
+ $('sdmsg').textContent='Folder upload done: '+fs.length+' files';
+ list();
 };
 list();
 </script></body></html>)HTML";
@@ -215,13 +238,25 @@ void OtaWebService::handleSdList() {
     server_.send(200, "application/json", json);
 }
 
+/* Create all intermediate directories of a file path (mkdir on an existing
+ * directory fails harmlessly). */
+static void mkdirsFor(const String& filePath) {
+    for (int i = 1; (i = filePath.indexOf('/', i)) > 0; ++i)
+        SD.mkdir(filePath.substring(0, i));
+}
+
 void OtaWebService::handleSdUpload() {
     HTTPUpload& up = server_.upload();
     if (up.status == UPLOAD_FILE_START) {
         sdUploadOk_ = false;
         if (!gmap::sdMount()) return;
         String dir = normPath(server_.arg("dir"));
-        String path = (dir == "/" ? "" : dir) + "/" + up.filename;
+        /* Folder uploads pass the file's relative path (sub/dir/file.ext) so
+         * the directory tree is recreated on the SD card. */
+        String rel = server_.arg("path");
+        if (rel.isEmpty()) rel = up.filename;
+        String path = normPath((dir == "/" ? "" : dir) + "/" + rel);
+        mkdirsFor(path);
         SD.remove(path);
         uploadFile_ = SD.open(path, FILE_WRITE);
         Serial.printf("[SD] upload start: %s -> %s\n",
@@ -255,16 +290,40 @@ void OtaWebService::handleSdDownload() {
     f.close();
 }
 
+/* SD.rmdir() only works on empty directories — delete contents first. */
+static bool deleteRecursive(const String& path) {
+    File f = SD.open(path);
+    if (!f) return false;
+    if (!f.isDirectory()) {
+        f.close();
+        return SD.remove(path);
+    }
+    File entry;
+    while ((entry = f.openNextFile())) {
+        String child = path + (path.endsWith("/") ? "" : "/") + entry.name();
+        bool isDir = entry.isDirectory();
+        entry.close();
+        bool ok = isDir ? deleteRecursive(child) : SD.remove(child);
+        if (!ok) {
+            f.close();
+            return false;
+        }
+        yield();   /* keep WiFi/watchdog alive while wiping large trees */
+    }
+    f.close();
+    return SD.rmdir(path);
+}
+
 void OtaWebService::handleSdDelete() {
     if (!ensureSd()) return;
     String path = normPath(server_.arg("path"));
-    File f = SD.open(path);
-    bool isDir = f && f.isDirectory();
-    f.close();
-    bool ok = isDir ? SD.rmdir(path) : SD.remove(path);
+    if (path == "/") {
+        server_.send(400, "text/plain", "Refusing to delete root");
+        return;
+    }
+    bool ok = deleteRecursive(path);
     server_.send(ok ? 200 : 500, "text/plain",
-                 ok ? "Deleted " + path
-                    : "Delete failed (non-empty dir?): " + path);
+                 ok ? "Deleted " + path : "Delete failed: " + path);
 }
 
 void OtaWebService::handleSdMkdir() {

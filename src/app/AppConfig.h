@@ -38,7 +38,7 @@ struct AppConfig {
     /* Map (held in PSRAM, larger than the screen for pan headroom) */
     uint16_t mapW         = 1024;
     uint16_t mapH         = 1024;
-    uint8_t  mapZoom      = 17;
+    uint8_t  mapZoom      = 18;
     uint16_t edgeMarginPx = 150;      /* re-fetch when marker within this of edge */
 
     /**
@@ -52,8 +52,8 @@ struct AppConfig {
 
     /* Default map centre for XYZ mode (shown before any GPS fix).
      * Set to the centre of your downloaded tile area. */
-    double   defaultLat   = 21.0746;   /* centre of Hanoi test area — change to yours */
-    double   defaultLon   = 105.7890;
+    double   defaultLat   = 21.076800;   /* centre of Hanoi test area — change to yours */
+    double   defaultLon   = 105.804936;
 
 
     /** Load persisted values from NVS (keeps defaults for missing keys). */

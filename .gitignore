@@ -4,4 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 /output/
-/sd_titles/
+/sd_tiles/
+/tiles/
