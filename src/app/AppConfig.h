@@ -38,7 +38,7 @@ struct AppConfig {
     /* Map (held in PSRAM, larger than the screen for pan headroom) */
     uint16_t mapW         = 1024;
     uint16_t mapH         = 1024;
-    uint8_t  mapZoom      = 18;
+    uint8_t  mapZoom      = 15;
     uint16_t edgeMarginPx = 150;      /* re-fetch when marker within this of edge */
 
     /**

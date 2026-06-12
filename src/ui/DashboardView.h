@@ -21,6 +21,7 @@
 #include "board/BoardPins.h"
 #include "telemetry/TelemetryTypes.h"
 #include "ui/HudView.h"
+#include "ui/gen/UiGen.h"
 
 namespace ui {
 
@@ -30,7 +31,7 @@ public:
     void update(const telemetry::TelemetrySnapshot& snap);
 
     /** Panel that MapView draws the satellite image + marker into. */
-    lv_obj_t* mapContainer() const { return mapPanel_; }
+    lv_obj_t* mapContainer() const { return w_.mapPanel; }
 
     /* ---- Callbacks wired by GroundStationApp ---- */
     std::function<void(bool /*enabled*/)> onForwardToggle;
@@ -43,50 +44,17 @@ public:
     void setWifiStatus(bool connected, const char* ip);
 
 private:
-    static void forwardSwEvent(lv_event_t* e);
-    static void sourceSwEvent(lv_event_t* e);
-    static void thumbClickEvent(lv_event_t* e);
-
     void applyLayout();
     void swapView();
 
-    /* ---- Geometry constants ---- */
-    static constexpr lv_coord_t kTopBarH  = 50;
-    static constexpr lv_coord_t kBotBarH  = 90;
-    static constexpr lv_coord_t kThumbW   = 220;
-    static constexpr lv_coord_t kThumbH   = 148;
-    static constexpr lv_coord_t kThumbX   = board::kScreenWidth  - kThumbW - 4;  /* 576 */
-    static constexpr lv_coord_t kThumbY   = kTopBarH + 2;                        /*  52 */
-
     bool hudPrimary_ = true;
 
-    /* ---- Main panels ---- */
-    lv_obj_t* hudPanel_    = nullptr;
-    lv_obj_t* mapPanel_    = nullptr;
+    /* All static layout + event wiring come from ui/ui_schema.json (UiGen.h). */
+    gen::Widgets  w_;
+    gen::Handlers h_;
 
-    /* ---- Overlay containers ---- */
-    lv_obj_t* topBar_      = nullptr;
-    lv_obj_t* botBar_      = nullptr;
-    lv_obj_t* thumbClick_  = nullptr;   /* transparent tap zone over thumbnail */
-
-    /* ---- HUD ---- */
+    /* ---- HUD (custom-drawn, attached to w_.hudPanel) ---- */
     HudView   hud_;
-
-    /* ---- Top-bar labels ---- */
-    lv_obj_t* lblMode_     = nullptr;
-    lv_obj_t* lblArmed_    = nullptr;
-    lv_obj_t* lblLink_     = nullptr;
-    lv_obj_t* lblWifi_     = nullptr;
-
-    /* ---- Bottom-bar widgets ---- */
-    lv_obj_t* barBatt_     = nullptr;
-    lv_obj_t* lblBatt_     = nullptr;
-    lv_obj_t* lblGps_      = nullptr;
-    lv_obj_t* lblPos_      = nullptr;
-    lv_obj_t* lblWarn_     = nullptr;
-    lv_obj_t* swForward_   = nullptr;
-    lv_obj_t* swSource_    = nullptr;
-    lv_obj_t* lblSource_   = nullptr;   /* dynamic "UART"/"USB " text */
 };
 
 }  // namespace ui

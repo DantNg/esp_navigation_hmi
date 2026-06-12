@@ -1,0 +1,135 @@
+{
+  "$comment": "UI layout schema — edit this file to change the UI, then rebuild. tools/gen_ui.py generates src/ui/gen/UiGen.h from it at compile time.",
+
+  "constants": {
+    "screenW": 800,
+    "screenH": 480,
+    "topBarH": 50,
+    "botBarH": 90,
+    "thumbW": 220,
+    "thumbH": 148,
+    "thumbX": "$screenW - $thumbW - 4",
+    "thumbY": "$topBarH + 2"
+  },
+
+  "palette": {
+    "bg":      "0x0d1117",
+    "map":     "0x05080d",
+    "text":    "0xe6edf3",
+    "muted":   "0x8b95a3",
+    "accent":  "0x2dd4bf",
+    "good":    "0x2ea043",
+    "bad":     "0xda3633",
+    "warn":    "0xd29922",
+    "overlay": "0x000000",
+    "chip":    "0x30363d"
+  },
+
+  "fonts": {
+    "f12": "lv_font_montserrat_12",
+    "f14": "lv_font_montserrat_14",
+    "f20": "lv_font_montserrat_20"
+  },
+
+  "screen": {
+    "style": { "bg_color": "$bg", "bg_opa": "cover" },
+    "flags": ["no_scroll"]
+  },
+
+  "elements": [
+    {
+      "id": "hudPanel",
+      "type": "panel",
+      "$comment": "Primary panel by default; HudView draws into it from C++. Size/pos set at runtime by applyLayout().",
+      "style": { "bg_color": "$bg", "bg_opa": "cover", "border_width": 0, "radius": 0, "pad_all": 0 },
+      "flags": ["no_scroll"]
+    },
+
+    {
+      "id": "mapPanel",
+      "type": "panel",
+      "$comment": "Thumbnail by default; MapView draws tiles into it.",
+      "style": { "bg_color": "$map", "bg_opa": "cover", "border_color": "$accent", "border_width": 2, "radius": 4, "pad_all": 0 },
+      "flags": ["no_scroll"],
+      "children": [
+        {
+          "id": "mapHint",
+          "type": "label",
+          "text": "MAP\nwaiting for GPS...",
+          "font": "f14",
+          "style": { "text_color": "$muted", "text_align": "center" },
+          "align": "center"
+        }
+      ]
+    },
+
+    {
+      "id": "topBar",
+      "type": "panel",
+      "w": "$screenW", "h": "$topBarH", "x": 0, "y": 0,
+      "style": { "bg_color": "$overlay", "bg_opa": 60, "border_width": 0, "radius": 0, "pad_hor": 10, "pad_ver": 6 },
+      "flags": ["no_scroll"],
+      "flex": { "flow": "row", "main": "start", "cross": "center", "track": "center" },
+      "children": [
+        { "id": "lblMode", "type": "label", "text": "---", "font": "f20", "style": { "text_color": "$text" } },
+        {
+          "id": "lblArmed", "type": "label", "text": " DISARMED ", "font": "f12",
+          "style": { "text_color": "$text", "bg_color": "$chip", "bg_opa": "cover", "radius": 4,
+                     "pad_hor": 4, "pad_ver": 2, "pad_left": 8 }
+        },
+        { "type": "spacer" },
+        { "id": "lblLink", "type": "label", "text": "link: —", "font": "f12", "style": { "text_color": "$muted", "pad_right": 12 } },
+        { "id": "lblWifi", "type": "label", "text": "wifi: off", "font": "f12", "style": { "text_color": "$muted" } }
+      ]
+    },
+
+    {
+      "id": "botBar",
+      "type": "panel",
+      "w": "$screenW", "h": "$botBarH", "x": 0, "y": "$screenH - $botBarH",
+      "style": { "bg_color": "$overlay", "bg_opa": 70, "border_width": 0, "radius": 0, "pad_all": 6, "pad_row": 3 },
+      "flags": ["no_scroll"],
+      "flex": { "flow": "column" },
+      "children": [
+        {
+          "type": "flexrow",
+          "children": [
+            {
+              "id": "barBatt", "type": "bar", "w": 100, "h": 8,
+              "range": [0, 100], "value": 0,
+              "style": { "bg_color": "$chip" },
+              "indicator_color": "$good"
+            },
+            { "id": "lblBatt", "type": "label", "text": " —", "font": "f12",
+              "style": { "text_color": "$text", "pad_left": 4 }, "grow": 1 },
+            { "id": "lblGps", "type": "label", "text": "GPS: —", "font": "f12", "style": { "text_color": "$muted" } }
+          ]
+        },
+        { "id": "lblPos", "type": "label", "text": "no position", "font": "f12", "style": { "text_color": "$muted" } },
+        {
+          "type": "flexrow",
+          "children": [
+            { "id": "lblWarn", "type": "label", "text": "", "font": "f12", "long_mode": "clip",
+              "style": { "text_color": "$muted" }, "grow": 1 },
+            { "type": "label", "text": "FWD", "font": "f12", "style": { "text_color": "$text", "pad_left": 10 } },
+            { "id": "swForward", "type": "switch", "style": { "pad_left": 3 },
+              "event": { "trigger": "value_changed", "handler": "onForwardChanged" } },
+            { "id": "lblSource", "type": "label", "text": "UART", "font": "f12", "style": { "text_color": "$text", "pad_left": 12 } },
+            { "id": "swSource", "type": "switch", "style": { "pad_left": 3 },
+              "event": { "trigger": "value_changed", "handler": "onSourceChanged" } }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "thumbClick",
+      "type": "panel",
+      "$comment": "Transparent tap zone over the thumbnail; positioned at runtime by applyLayout().",
+      "w": "$thumbW + 4", "h": "$thumbH + 4",
+      "style": { "bg_opa": "transp", "border_opa": "transp" },
+      "flags": ["no_scroll", "clickable"],
+      "event": { "trigger": "clicked", "handler": "onThumbClicked" }
+    }
+  ]
+}

@@ -4,5 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 /output/
+# Auto-generated from ui/ui_schema.json by tools/gen_ui.py at build time
+/src/ui/gen/
 /sd_tiles/
 /tiles/
