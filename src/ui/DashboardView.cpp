@@ -55,10 +55,9 @@ void DashboardView::applyLayout() {
     /* Position the click zone over the thumbnail */
     lv_obj_set_pos(w_.thumbClick, kThumbX - 2, kThumbY - 2);
 
-    /* Z-order: primary at back, then thumbnail, then overlay bars, then click zone */
+    /* Z-order: primary at back, then thumbnail, then overlay bar, then click zone */
     lv_obj_move_background(primary);
     /* thumbnail stays naturally above primary in child list after this */
-    lv_obj_move_foreground(w_.topBar);
     lv_obj_move_foreground(w_.botBar);
     lv_obj_move_foreground(w_.thumbClick);
 }
