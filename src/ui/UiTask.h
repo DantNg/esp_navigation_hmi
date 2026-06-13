@@ -16,6 +16,7 @@
 #include "telemetry/TelemetryStore.h"
 #include "ui/DashboardView.h"
 #include "ui/MapView.h"
+#include "ui/SettingsView.h"
 
 namespace ui {
 
@@ -33,10 +34,12 @@ public:
     void tick();
 
     DashboardView& dashboard() { return dashboard_; }
+    SettingsView&  settings()  { return settings_; }
 
 private:
     telemetry::TelemetryStore& store_;
     DashboardView              dashboard_;
+    SettingsView               settings_;
     MapView                    mapView_;
     gmap::MapExchange*          exchange_ = nullptr;
     uint32_t                   lastRefreshMs_ = 0;

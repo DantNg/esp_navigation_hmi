@@ -32,6 +32,9 @@ void DashboardView::build(lv_obj_t* screen) {
         if (onSourceToggle) onSourceToggle(useUsb);
     };
     h_.onThumbClicked = [this](lv_event_t*) { swapView(); };
+    h_.onSettingsClicked = [this](lv_event_t*) {
+        if (onSettingsOpen) onSettingsOpen();
+    };
 
     applyLayout();
 }
@@ -150,12 +153,9 @@ void DashboardView::setSourceIsUsb(bool useUsb) {
 
 void DashboardView::setWifiStatus(bool connected, const char* ip) {
     if (!w_.lblWifi) return;
-    char buf[48];
-    if (connected) {
-        snprintf(buf, sizeof(buf), "wifi: %s", ip ? ip : "connected");
-    } else {
-        snprintf(buf, sizeof(buf), "wifi: off");
-    }
+    char buf[80];
+    snprintf(buf, sizeof(buf), "wifi: %s",
+             ip && ip[0] ? ip : (connected ? "connected" : "off"));
     lv_label_set_text(w_.lblWifi, buf);
     lv_obj_set_style_text_color(w_.lblWifi,
         lv_color_hex(connected ? kColGood : kColMuted), 0);

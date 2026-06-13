@@ -113,7 +113,13 @@
         },
         { "type": "spacer" },
         { "id": "lblLink", "type": "label", "text": "link: —", "font": "f12", "style": { "text_color": "$muted", "pad_right": 12 } },
-        { "id": "lblWifi", "type": "label", "text": "wifi: off", "font": "f12", "style": { "text_color": "$muted" } }
+        { "id": "lblWifi", "type": "label", "text": "wifi: off", "font": "f12", "style": { "text_color": "$muted" } },
+        {
+          "id": "btnSettings", "type": "label", "text": "", "font": "f20",
+          "style": { "text_color": "$text", "pad_left": 14, "pad_right": 4 },
+          "flags": ["clickable"],
+          "event": { "trigger": "clicked", "handler": "onSettingsClicked" }
+        }
       ]
     },
 

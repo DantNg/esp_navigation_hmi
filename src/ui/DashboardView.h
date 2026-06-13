@@ -38,6 +38,8 @@ public:
     std::function<void(bool /*useUsb*/)>  onSourceToggle;
     /** Called after primary/secondary panels are resized (UiTask notifies MapView). */
     std::function<void()>                 onViewSwap;
+    /** Called when the gear icon in the top bar is tapped. */
+    std::function<void()>                 onSettingsOpen;
 
     void setForwardState(bool enabled);
     void setSourceIsUsb(bool useUsb);

@@ -1,6 +1,8 @@
 #include "app/GroundStationApp.h"
 
 #include <Arduino.h>
+#include <cstdio>
+#include <cstring>
 
 namespace app {
 
@@ -84,6 +86,17 @@ void GroundStationApp::begin() {
     ui_.dashboard().setForwardState(config_.forwardEnabled);
     ui_.dashboard().setSourceIsUsb(config_.linkSourceUsb);
 
+    /* WiFi settings screen: persist new credentials, then re-associate. */
+    ui_.settings().setSsid(config_.wifiSsid);
+    ui_.settings().onConnect = [this](const char* ssid, const char* pass) {
+        strncpy(config_.wifiSsid, ssid, sizeof(config_.wifiSsid) - 1);
+        config_.wifiSsid[sizeof(config_.wifiSsid) - 1] = '\0';
+        strncpy(config_.wifiPass, pass, sizeof(config_.wifiPass) - 1);
+        config_.wifiPass[sizeof(config_.wifiPass) - 1] = '\0';
+        config_.save();
+        wifi_.setCredentials(config_.wifiSsid, config_.wifiPass);
+    };
+
     /* Telemetry pipeline */
     uartSource_.setBaud(config_.telemBaud);
     link_.addConsumer(&decoder_);
@@ -111,12 +124,40 @@ void GroundStationApp::loop() {
         {
             using net::WifiManager;
             const WifiManager::Status ws = wifi_.status();
-            const char* statusStr =
-                ws == WifiManager::Status::Connected  ? wifi_.ip()       :
-                ws == WifiManager::Status::Connecting ? "connecting..."   :
-                ws == WifiManager::Status::Failed     ? "failed"          : "off";
-            ui_.dashboard().setWifiStatus(ws == WifiManager::Status::Connected,
-                                          statusStr);
+            const bool isUp = ws == WifiManager::Status::Connected;
+            char buf[64];
+            if (isUp) {
+                snprintf(buf, sizeof(buf), "%s", wifi_.ip());
+            } else if (wifi_.apActive()) {
+                /* Setup AP is up — show how to reach the board. */
+                snprintf(buf, sizeof(buf), "AP %s (%s)",
+                         WifiManager::apSsid(), wifi_.apIp());
+            } else {
+                snprintf(buf, sizeof(buf), "%s",
+                         ws == WifiManager::Status::Connecting ? "connecting..." :
+                         ws == WifiManager::Status::Failed     ? "failed" : "off");
+            }
+            ui_.dashboard().setWifiStatus(isUp, buf);
+
+            /* Keep the settings screen's status line current too. */
+            if (isUp) {
+                char sbuf[80];
+                snprintf(sbuf, sizeof(sbuf), "connected to \"%s\" — %s",
+                         wifi_.ssid(), wifi_.ip());
+                ui_.settings().setStatus(sbuf, true);
+            } else if (ws == WifiManager::Status::Connecting) {
+                char sbuf[96];
+                snprintf(sbuf, sizeof(sbuf),
+                         "connecting to \"%s\"...  (AP: %s / %s)",
+                         wifi_.ssid(), WifiManager::apSsid(), wifi_.apIp());
+                ui_.settings().setStatus(sbuf, false);
+            } else if (ws == WifiManager::Status::Failed) {
+                char sbuf[96];
+                snprintf(sbuf, sizeof(sbuf),
+                         "connection failed  (AP: %s, pass 12345678, %s)",
+                         WifiManager::apSsid(), wifi_.apIp());
+                ui_.settings().setStatus(sbuf, false);
+            }
         }
     }
 
