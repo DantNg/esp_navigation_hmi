@@ -296,6 +296,21 @@ class Generator:
         for k, v in self.palette.items():
             out.append("constexpr uint32_t kCol%s = %s;" % (camel(k), v))
         out.append("")
+        custom = self.schema.get("custom", {})
+        for group, spec in custom.items():
+            if group.startswith("$"):
+                continue
+            out.append("/* ---- Custom-draw parameters: %s ---- */" % group)
+            out.append("namespace %s {" % group)
+            for k, v in spec.get("colors", {}).items():
+                out.append("constexpr uint32_t k%s = %s;" % (camel(k), v))
+            for k, v in spec.get("values", {}).items():
+                if isinstance(v, float):
+                    out.append("constexpr float k%s = %sf;" % (camel(k), v))
+                else:
+                    out.append("constexpr int32_t k%s = %d;" % (camel(k), v))
+            out.append("}  // namespace %s" % group)
+            out.append("")
         out.append("/* ---- Named widgets ---- */")
         out.append("struct Widgets {")
         for eid in self.ids:

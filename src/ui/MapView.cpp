@@ -1,10 +1,13 @@
 ﻿#include "ui/MapView.h"
 
+#include "ui/gen/UiGen.h"
+
 namespace ui {
 
+/* Marker look comes from ui/ui_schema.json ("custom.map" section). */
 namespace {
-constexpr int      kMarkerSize  = 18;
-constexpr uint32_t kMarkerColor = 0xff3b30;
+constexpr int      kMarkerSize  = gen::map::kMarkerSize;
+constexpr uint32_t kMarkerColor = gen::map::kMarker;
 }
 
 void MapView::build(lv_obj_t* panel, gmap::MapExchange& exchange) {

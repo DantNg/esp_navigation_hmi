@@ -31,6 +31,40 @@
     "f20": "lv_font_montserrat_20"
   },
 
+  "custom": {
+    "$comment": "Parameters for custom-drawn views (procedural drawing stays in C++, look is tuned here). Emitted as gen::hud::k... / gen::map::k...",
+    "hud": {
+      "colors": {
+        "sky":      "0x2456a4",
+        "skyHigh":  "0x16386e",
+        "ground":   "0x5d4226",
+        "groundLow":"0x3a2a18",
+        "line":     "0xffffff",
+        "accent":   "0xffd400",
+        "boxBg":    "0x10151c",
+        "text":     "0xffffff",
+        "tapeBg":   "0x10151c",
+        "tapeTick": "0xc9d1d9"
+      },
+      "values": {
+        "pxPerDeg":     3.0,
+        "tapeMinW":     300,
+        "tapeW":        52,
+        "ribbonH":      26,
+        "spdPxPerUnit": 4.0,
+        "altPxPerUnit": 1.6,
+        "hdgPxPerDeg":  3.0,
+        "ladderGap":    36,
+        "ladderHalf10": 60,
+        "ladderHalf5":  26
+      }
+    },
+    "map": {
+      "colors": { "marker": "0xff3b30" },
+      "values": { "markerSize": 18 }
+    }
+  },
+
   "screen": {
     "style": { "bg_color": "$bg", "bg_opa": "cover" },
     "flags": ["no_scroll"]
