@@ -3,8 +3,8 @@
  * @brief Facade that wires the GT911 touch panel into an LVGL input device.
  *
  * Single responsibility: own the LVGL indev registration. The actual GT911
- * register access stays in include/touch.h (board vendor code), included once
- * from TouchInput.cpp.
+ * register access + coordinate mapping live in board/Gt911Touch, which is
+ * parametrized by the active board's BoardConfig (no hard-coded pins).
  */
 #ifndef BOARD_TOUCH_INPUT_H
 #define BOARD_TOUCH_INPUT_H

@@ -1,10 +1,13 @@
 /**
  * @file Lgfx.h
- * @brief LovyanGFX device definition for the CrowPanel 800x480 RGB panel.
+ * @brief LovyanGFX device for the active board's parallel RGB panel.
  *
- * The concrete panel/bus wiring lives here (moved verbatim from the original
- * main.cpp). A single global `lcd` instance is shared by the display flush
- * callback (Display.cpp) and the touch coordinate scaler (include/touch.h).
+ * The concrete pins/timing are NOT hard-coded here anymore: the constructor
+ * reads them from board::kBoard.panel (BoardConfig). Supporting another RGB
+ * panel is purely a data change in a board header — this file is unchanged.
+ *
+ * A single global `lcd` instance is shared by the display flush callback
+ * (Display.cpp).
  */
 #ifndef BOARD_LGFX_H
 #define BOARD_LGFX_H
@@ -14,63 +17,55 @@
 #include <lgfx/v1/platforms/esp32s3/Panel_RGB.hpp>
 #include <lgfx/v1/platforms/esp32s3/Bus_RGB.hpp>
 
+#include "board/ActiveBoard.h"
+
 class LGFX : public lgfx::LGFX_Device {
 public:
     lgfx::Bus_RGB   _bus_instance;
     lgfx::Panel_RGB _panel_instance;
 
     LGFX(void) {
+        constexpr auto& p = board::kBoard.panel;
         {
             auto cfg = _bus_instance.config();
             cfg.panel = &_panel_instance;
 
-            cfg.pin_d0  = GPIO_NUM_8;   // B0
-            cfg.pin_d1  = GPIO_NUM_3;   // B1
-            cfg.pin_d2  = GPIO_NUM_46;  // B2
-            cfg.pin_d3  = GPIO_NUM_9;   // B3
-            cfg.pin_d4  = GPIO_NUM_1;   // B4
+            /* LovyanGFX bus order d0..d15 = B0..B4, G0..G5, R0..R4. */
+            cfg.pin_d0  = p.b0;  cfg.pin_d1  = p.b1;  cfg.pin_d2  = p.b2;
+            cfg.pin_d3  = p.b3;  cfg.pin_d4  = p.b4;
+            cfg.pin_d5  = p.g0;  cfg.pin_d6  = p.g1;  cfg.pin_d7  = p.g2;
+            cfg.pin_d8  = p.g3;  cfg.pin_d9  = p.g4;  cfg.pin_d10 = p.g5;
+            cfg.pin_d11 = p.r0;  cfg.pin_d12 = p.r1;  cfg.pin_d13 = p.r2;
+            cfg.pin_d14 = p.r3;  cfg.pin_d15 = p.r4;
 
-            cfg.pin_d5  = GPIO_NUM_5;   // G0
-            cfg.pin_d6  = GPIO_NUM_6;   // G1
-            cfg.pin_d7  = GPIO_NUM_7;   // G2
-            cfg.pin_d8  = GPIO_NUM_15;  // G3
-            cfg.pin_d9  = GPIO_NUM_16;  // G4
-            cfg.pin_d10 = GPIO_NUM_4;   // G5
+            cfg.pin_henable = p.de;
+            cfg.pin_vsync   = p.vsync;
+            cfg.pin_hsync   = p.hsync;
+            cfg.pin_pclk    = p.pclk;
+            cfg.freq_write  = p.pclkHz;
 
-            cfg.pin_d11 = GPIO_NUM_45;  // R0
-            cfg.pin_d12 = GPIO_NUM_48;  // R1
-            cfg.pin_d13 = GPIO_NUM_47;  // R2
-            cfg.pin_d14 = GPIO_NUM_21;  // R3
-            cfg.pin_d15 = GPIO_NUM_14;  // R4
+            cfg.hsync_polarity    = p.hsyncPolarity;
+            cfg.hsync_front_porch = p.hsyncFrontPorch;
+            cfg.hsync_pulse_width = p.hsyncPulseWidth;
+            cfg.hsync_back_porch  = p.hsyncBackPorch;
 
-            cfg.pin_henable = GPIO_NUM_40;
-            cfg.pin_vsync   = GPIO_NUM_41;
-            cfg.pin_hsync   = GPIO_NUM_39;
-            cfg.pin_pclk    = GPIO_NUM_0;
-            cfg.freq_write  = 15000000;
+            cfg.vsync_polarity    = p.vsyncPolarity;
+            cfg.vsync_front_porch = p.vsyncFrontPorch;
+            cfg.vsync_pulse_width = p.vsyncPulseWidth;
+            cfg.vsync_back_porch  = p.vsyncBackPorch;
 
-            cfg.hsync_polarity    = 0;
-            cfg.hsync_front_porch = 8;
-            cfg.hsync_pulse_width = 4;
-            cfg.hsync_back_porch  = 43;
-
-            cfg.vsync_polarity    = 0;
-            cfg.vsync_front_porch = 8;
-            cfg.vsync_pulse_width = 4;
-            cfg.vsync_back_porch  = 12;
-
-            cfg.pclk_active_neg = 1;
-            cfg.de_idle_high    = 0;
-            cfg.pclk_idle_high  = 0;
+            cfg.pclk_active_neg = p.pclkActiveNeg;
+            cfg.de_idle_high    = p.deIdleHigh;
+            cfg.pclk_idle_high  = p.pclkIdleHigh;
 
             _bus_instance.config(cfg);
         }
         {
             auto cfg = _panel_instance.config();
-            cfg.memory_width  = 800;
-            cfg.memory_height = 480;
-            cfg.panel_width   = 800;
-            cfg.panel_height  = 480;
+            cfg.memory_width  = p.width;
+            cfg.memory_height = p.height;
+            cfg.panel_width   = p.width;
+            cfg.panel_height  = p.height;
             cfg.offset_x = 0;
             cfg.offset_y = 0;
             _panel_instance.config(cfg);

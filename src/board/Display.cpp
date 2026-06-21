@@ -22,6 +22,15 @@ lv_disp_drv_t      g_disp_drv;
 void flush_cb(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* color_p) {
     const uint32_t w = (area->x2 - area->x1 + 1);
     const uint32_t h = (area->y2 - area->y1 + 1);
+
+    /* Panels that ship photometric-negative colour: invert each RGB565 pixel
+     * before pushing. Compile-time gated, so boards without the flag pay nothing.
+     * Done before the DMA push so the buffer is final when the transfer starts. */
+    if constexpr (kBoard.panel.invert) {
+        const uint32_t n = w * h;
+        for (uint32_t i = 0; i < n; i++) color_p[i].full ^= 0xFFFF;
+    }
+
     lcd.pushImageDMA(area->x1, area->y1, w, h, (lgfx::rgb565_t*)&color_p->full);
     lv_disp_flush_ready(disp);
 }

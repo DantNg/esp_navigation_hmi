@@ -1,24 +1,23 @@
 #include "board/TouchInput.h"
 
-#include <Arduino.h>
 #include <lvgl.h>
 
-/* Lgfx.h must come before touch.h: the GT911 coordinate scaler in touch.h
- * references the global `lcd` (lcd.width()/height()). */
-#include "board/Lgfx.h"
-#include "touch.h"
+#include "board/ActiveBoard.h"
+#include "board/Gt911Touch.h"
 
 namespace board {
 
 namespace {
 
+Gt911Touch     g_touch;
 lv_indev_drv_t g_indev_drv;
 
 void read_cb(lv_indev_drv_t* /*drv*/, lv_indev_data_t* data) {
-    if (touch_has_signal() && touch_touched()) {
+    int16_t x, y;
+    if (g_touch.read(x, y)) {
         data->state   = LV_INDEV_STATE_PR;
-        data->point.x = touch_last_x;
-        data->point.y = touch_last_y;
+        data->point.x = x;
+        data->point.y = y;
     } else {
         data->state = LV_INDEV_STATE_REL;
     }
@@ -27,7 +26,11 @@ void read_cb(lv_indev_drv_t* /*drv*/, lv_indev_data_t* data) {
 }  // namespace
 
 bool TouchInput::begin() {
-    touch_init();
+    /* Both supported boards use GT911; branch here when another controller
+     * family is added (see Gt911Touch.h). */
+    static_assert(kBoard.touch.type == TouchType::GT911,
+                  "active board's touch controller has no driver wired up");
+    g_touch.begin();
 
     lv_indev_drv_init(&g_indev_drv);
     g_indev_drv.type    = LV_INDEV_TYPE_POINTER;

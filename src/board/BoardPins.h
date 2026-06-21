@@ -1,40 +1,41 @@
 /**
  * @file BoardPins.h
- * @brief Central hardware pin/constant map for the CrowPanel ESP32-S3 5.0".
+ * @brief Convenience constants for the active board, derived from board::kBoard.
  *
- * All board-specific wiring lives here so the rest of the code never hard-codes
- * a GPIO number. The RGB panel data pins are configured inside Display.cpp (they
- * belong to the LovyanGFX bus descriptor); everything else is defined here.
+ * These names are kept for the rest of the codebase; their values come from the
+ * selected BoardConfig (see ActiveBoard.h), so switching boards never touches a
+ * call site. The RGB panel data pins/timing live in the BoardConfig and are
+ * consumed by Display/Lgfx; everything peripheral is surfaced here.
  */
 #ifndef BOARD_PINS_H
 #define BOARD_PINS_H
 
 #include <cstdint>
 
+#include "board/ActiveBoard.h"
+
 namespace board {
 
 /* ---- Display ---- */
-constexpr uint16_t kScreenWidth  = 800;
-constexpr uint16_t kScreenHeight = 480;
-constexpr int      kPinBacklight = 2;     /* TFT_BL */
+constexpr uint16_t kScreenWidth  = kBoard.panel.width;
+constexpr uint16_t kScreenHeight = kBoard.panel.height;
+constexpr int      kPinBacklight = kBoard.panel.backlight;
 
-/* ---- Touch (GT911 over I2C) — see include/touch.h ---- */
-constexpr int kPinTouchSda = 19;
-constexpr int kPinTouchScl = 20;
+/* ---- Touch ---- */
+constexpr int kPinTouchSda = kBoard.touch.sda;
+constexpr int kPinTouchScl = kBoard.touch.scl;
 
 /* ---- SD card (SPI) ---- */
-constexpr int kPinSdCs   = 10;
-constexpr int kPinSdMosi = 11;
-constexpr int kPinSdSck  = 12;
-constexpr int kPinSdMiso = 13;
+constexpr int kPinSdCs   = kBoard.sd.cs;
+constexpr int kPinSdMosi = kBoard.sd.mosi;
+constexpr int kPinSdSck  = kBoard.sd.sck;
+constexpr int kPinSdMiso = kBoard.sd.miso;
 
-/* ---- Drone telemetry UART (HardwareSerial #1) ----
- * Default RX=44 / TX=43 match the serial header the original firmware used for
- * an external module. Confirm against your CrowPanel's exposed pins. */
-constexpr int      kPinTelemRx  = 44;
-constexpr int      kPinTelemTx  = 43;
-constexpr uint32_t kTelemBaud   = 57600;   /* common ArduPilot/PX4 telem rate */
-constexpr int      kTelemUartNo = 1;       /* Serial1 */
+/* ---- Drone telemetry UART (HardwareSerial) ---- */
+constexpr int      kPinTelemRx  = kBoard.telem.rx;
+constexpr int      kPinTelemTx  = kBoard.telem.tx;
+constexpr uint32_t kTelemBaud   = kBoard.telem.baud;
+constexpr int      kTelemUartNo = kBoard.telem.uartNo;
 
 }  // namespace board
 
